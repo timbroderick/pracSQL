@@ -1,2 +1,2 @@
 # pracSQL
-Exercises from Practical SQL
+Exercises from Practical SQL.

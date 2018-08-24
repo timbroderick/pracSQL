@@ -18,7 +18,8 @@ VALUES
     ('abc', 'abc', 'abc'),
     ('defghi', 'defghi', 'defghi');
 
-COPY char_data_types TO 'C:\YourDirectory\typetest.txt'
+-- COPY char_data_types TO 'C:\YourDirectory\typetest.txt'
+COPY char_data_types TO '/anaconda3/envs/pracSQL/pracSQL/Chapter_03/typetest.txt'
 WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 

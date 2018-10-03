@@ -19,7 +19,7 @@ VALUES
     ('defghi', 'defghi', 'defghi');
 
 -- COPY char_data_types TO 'C:\YourDirectory\typetest.txt'
-COPY char_data_types TO '/anaconda3/envs/pracSQL/pracSQL/Chapter_03/typetest.txt'
+COPY char_data_types TO '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_03/typetest.txt'
 WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 
@@ -58,7 +58,7 @@ CREATE TABLE date_time_types (
 INSERT INTO date_time_types
 VALUES
     ('2018-12-31 01:00 EST','2 days'),
-    ('2018-12-31 01:00 PST','1 month'),
+    ('2018-12-31 01:00 -8','1 month'),
     ('2018-12-31 01:00 Australia/Melbourne','1 century'),
     (now(),'1 week');
 

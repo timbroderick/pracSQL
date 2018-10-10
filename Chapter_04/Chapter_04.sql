@@ -124,9 +124,10 @@ CREATE TABLE us_counties_2010 (
 SELECT * from us_counties_2010;
 
 -- Listing 4-3: Importing Census data using COPY
+--FROM 'C:\YourDirectory\us_counties_2010.csv'
 
 COPY us_counties_2010
-FROM 'C:\YourDirectory\us_counties_2010.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/us_counties_2010.csv'
 WITH (FORMAT CSV, HEADER);
 
 -- Checking the data

@@ -159,7 +159,7 @@ CREATE TABLE supervisor_salaries (
 -- Listing 4-5: Importing salaries data from CSV to three table columns
 
 COPY supervisor_salaries (town, supervisor, salary)
-FROM 'C:\YourDirectory\supervisor_salaries.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/supervisor_salaries.csv'
 WITH (FORMAT CSV, HEADER);
 
 -- Check the data
@@ -173,7 +173,7 @@ DELETE FROM supervisor_salaries;
 CREATE TEMPORARY TABLE supervisor_salaries_temp (LIKE supervisor_salaries);
 
 COPY supervisor_salaries_temp (town, supervisor, salary)
-FROM 'C:\YourDirectory\supervisor_salaries.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/supervisor_salaries.csv'
 WITH (FORMAT CSV, HEADER);
 
 INSERT INTO supervisor_salaries (town, county, supervisor, salary)
@@ -188,14 +188,14 @@ SELECT * FROM supervisor_salaries LIMIT 2;
 -- Listing 4-7: Export an entire table with COPY
 
 COPY us_counties_2010
-TO 'C:\YourDirectory\us_counties_export.txt'
+TO '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/us_counties_export.txt'
 WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 
 -- Listing 4-8: Exporting selected columns from a table with COPY
 
 COPY us_counties_2010 (geo_name, internal_point_lat, internal_point_lon)
-TO 'C:\YourDirectory\us_counties_latlon_export.txt'
+TO '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/us_counties_latlon_export.txt'
 WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 -- Listing 4-9: Exporting query results with COPY
@@ -205,5 +205,20 @@ COPY (
     FROM us_counties_2010
     WHERE geo_name ILIKE '%mill%'
      )
-TO 'C:\YourDirectory\us_counties_mill_export.txt'
+TO '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/us_counties_mill_export.txt'
 WITH (FORMAT CSV, HEADER, DELIMITER '|');
+
+
+-- Exercise answers
+-- Delimiter needs to be a : and escape #
+
+COPY (
+	SELECT geo_name, state_us_abbreviation, housing_unit_count_100_percent
+	FROM us_counties_2010
+	ORDER BY housing_unit_count_100_percent DESC
+	LIMIT 20
+)
+TO '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_04/top20housing.txt'
+WITH (FORMAT CSV, HEADER, DELIMITER '|');
+
+-- number type needs to be 8,3, not 3,8. 8 characters, with three decimals

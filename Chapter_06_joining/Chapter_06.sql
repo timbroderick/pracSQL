@@ -179,7 +179,7 @@ CREATE TABLE us_counties_2000 (
 );
 
 COPY us_counties_2000
-FROM 'C:\YourDirectory\us_counties_2000.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_06_joining/us_counties_2000.csv'
 WITH (FORMAT CSV, HEADER);
 
 SELECT c2010.geo_name,

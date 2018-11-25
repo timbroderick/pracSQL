@@ -85,6 +85,45 @@ factorial(4)
 factorial(5)
 # 1 x 2 x 3 x 4 X 5 = 120
 
+# finding sum and average of columns
+# " has a specific meaning in sql, ' does not
+
+sql <- 'SELECT sum(p0010001) AS "County Sum",
+round(avg(p0010001), 0) AS "County Average"
+FROM us_counties_2010;'
+dbGetQuery(con, sql)
+
+# in R
+# get the data
+sql <-'SELECT p0010001 as "County" FROM us_counties_2010;'
+df <- dbGetQuery(con, sql)
+head(df)
+
+# create an empty dataframe
+empty <- data_frame(
+  County_Sum=double(),
+  County_Average=double(),
+  County_Median=double(),
+  County_Mode=double()
+)
+
+# if we want to find the mode, we need to create a function
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+dfcalc <- rbind(empty, 
+                data.frame(County_Sum = sum(df$County), 
+                           County_Average = mean(df$County), 
+                           County_Median = median(df$County), 
+                           County_mode = getmode(df$County) 
+                           ) )
+dfcalc
+
+# and we can check some of that with summary stats
+summary(df)
+
 # --------------------
 # performing math on joining rows
 # what we should see is the result of an inner join, which returns only those matching criteria
@@ -131,10 +170,11 @@ AND c2010.p0010001 <> c2000.p0010001
 
 df <- dbGetQuery(con, sql)
 
+# Add the raw_change column
 df$raw_change <- df$pop_2010 - df$pop_2000
-
+# add the pct_change column
 df$pct_change <-  round( ( (df$pop_2010 - df$pop_2000)/df$pop_2000 )* 100,1) 
-
+# sort the df on pct_change
 df <- arrange(df, desc(pct_change))
 
 head(df)

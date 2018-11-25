@@ -1,6 +1,6 @@
 # set working directory
 
-setwd("~/anaconda3/envs/pracSQL/Chapter_05")
+setwd("~/anaconda3/envs/pracSQL/Chapter_05_math")
 
 library("RPostgreSQL")
 #https://www.r-bloggers.com/getting-started-with-postgresql-in-r/
@@ -84,6 +84,61 @@ factorial(4)
 # 1 x 2 x 3 x 4 = 24
 factorial(5)
 # 1 x 2 x 3 x 4 X 5 = 120
+
+# --------------------
+# performing math on joining rows
+# what we should see is the result of an inner join, which returns only those matching criteria
+# state fips, county fips and where population is not the same
+# returns only certain tables
+# from 2010 table: geo_name, state, pop
+# from 2000 table: pop
+# raw_change and pct_change are calculated
+# with pct_change rounded to 1 decimal
+
+sql <- "
+SELECT c2010.geo_name,
+c2010.state_us_abbreviation AS state,
+c2010.p0010001 AS pop_2010,
+c2000.p0010001 AS pop_2000,
+c2010.p0010001 - c2000.p0010001 AS raw_change,
+round( (CAST(c2010.p0010001 AS numeric(8,1)) - c2000.p0010001)
+/ c2000.p0010001 * 100, 1 ) AS pct_change
+FROM us_counties_2010 c2010 INNER JOIN us_counties_2000 c2000
+ON c2010.state_fips = c2000.state_fips
+AND c2010.county_fips = c2000.county_fips
+AND c2010.p0010001 <> c2000.p0010001
+ORDER BY pct_change DESC;
+"
+
+df <- dbGetQuery(con, sql)
+
+head(df)
+
+# here's how we'd do that in R
+
+library(tidyverse)
+
+sql <- "
+SELECT c2010.geo_name,
+c2010.state_us_abbreviation AS state,
+c2010.p0010001 AS pop_2010,
+c2000.p0010001 AS pop_2000
+FROM us_counties_2010 c2010 INNER JOIN us_counties_2000 c2000
+ON c2010.state_fips = c2000.state_fips
+AND c2010.county_fips = c2000.county_fips
+AND c2010.p0010001 <> c2000.p0010001
+"
+
+df <- dbGetQuery(con, sql)
+
+df$raw_change <- df$pop_2010 - df$pop_2000
+
+df$pct_change <-  round( ( (df$pop_2010 - df$pop_2000)/df$pop_2000 )* 100,1) 
+
+df <- arrange(df, desc(pct_change))
+
+head(df)
+
 
 # ---------------
 # finally, disconnect

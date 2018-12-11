@@ -164,8 +164,10 @@ CREATE TABLE new_york_addresses (
     id integer CONSTRAINT new_york_key PRIMARY KEY
 );
 
+-- FROM 'C:\YourDirectory\city_of_new_york.csv'
+
 COPY new_york_addresses
-FROM 'C:\YourDirectory\city_of_new_york.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_07_design/city_of_new_york.csv'
 WITH (FORMAT CSV, HEADER);
 
 -- Listing 7-12: Benchmark queries for index performance

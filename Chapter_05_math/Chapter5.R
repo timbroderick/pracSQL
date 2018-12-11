@@ -77,7 +77,7 @@ dbGetQuery(con, sql)
 # the cube root of 27 is 3 (3x3x3)
 
 # factorial
-sql <- "SELECT 4 !;"
+sql <- "SELECT 5 !;"
 dbGetQuery(con, sql)
 # in R
 factorial(4)

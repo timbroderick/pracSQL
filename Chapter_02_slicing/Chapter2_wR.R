@@ -15,7 +15,7 @@ dbExistsTable(con, "teachers")
 
 # Basic syntax for running sql requests
 teachers <- dbGetQuery(con, "SELECT * from teachers")
-
+summary(teachers)
 #write_csv(teachers,"teachers.csv")
 
 #teachers <- read_csv("teachers.csv")

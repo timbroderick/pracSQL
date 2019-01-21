@@ -71,5 +71,5 @@ sapply(df_postgres, class)
 # disconnect and unload driver when done
 dbDisconnect(con)
 dbUnloadDriver(drv)
-åå
+
 

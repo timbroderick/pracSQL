@@ -48,6 +48,10 @@ df <- select(teachers,'last_name','school','hire_date') %>% arrange(school,desc(
 df
 
 # filter rows
+
+df <- filter(teachers, school == "Myers Middle School")
+df
+
 df <- select(teachers,'last_name','school','hire_date') %>% filter(school == "Myers Middle School")
 df
 

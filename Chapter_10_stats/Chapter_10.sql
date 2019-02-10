@@ -19,12 +19,12 @@ CREATE TABLE acs_2011_2015_stats (
 );
 
 COPY acs_2011_2015_stats
-FROM 'C:\YourDirectory\acs_2011_2015_stats.csv'
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_10_stats/acs_2011_2015_stats.csv'
 WITH (FORMAT CSV, HEADER, DELIMITER ',');
 
 SELECT * FROM acs_2011_2015_stats;
 
--- Listing 10-2: Using corr(Y, X) to measure the relationship between 
+-- Listing 10-2: Using corr(Y, X) to measure the relationship between
 -- education and income
 
 SELECT corr(median_hh_income, pct_bachelors_higher)

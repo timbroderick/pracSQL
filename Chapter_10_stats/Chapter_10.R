@@ -36,6 +36,22 @@ dbGetQuery(con, sql)
 sql <- "SELECT * FROM acs_2011_2015_stats"
 df <- dbGetQuery(con, sql)
 
+
+
+# Always good to also check distribution of the data as well
+qplot(median_hh_income,
+      data=df,
+      bins = 100
+)
+
+median(df$median_hh_income, na.rm = TRUE)
+
+qplot(pct_bachelors_higher,
+      data=df,
+      bins = 100
+)
+median(df$pct_bachelors_higher, na.rm = TRUE)
+
 # get the R value for the correlation between education and income
 sql <- "SELECT corr(median_hh_income, pct_bachelors_higher)
     AS bachelors_income_r
@@ -123,18 +139,134 @@ yvalue50
 
 # These values allow us to plot a predictive regression line
 
-# Always good to also check distribution of the data as well
-qplot(median_hh_income,
-      data=df,
-      bins = 100
-)
-median(df$median_hh_income, na.rm = TRUE)
+# population variance
+sql <- "SELECT var_pop(median_hh_income)
+FROM acs_2011_2015_stats;"
+dbGetQuery(con, sql)
 
-qplot(pct_bachelors_higher,
-      data=df,
-      bins = 100
-)
-median(df$pct_bachelors_higher, na.rm = TRUE)
+# Variance in R - Gets close but not quite
+n <- nrow(df)
+var(df$median_hh_income, na.rm = TRUE) * ( n - 1) / n
+
+# standard deviation
+sql <- "SELECT stddev_pop(median_hh_income)
+FROM acs_2011_2015_stats;
+"
+dbGetQuery(con, sql)
+
+# standard deviation in R
+sd(df$median_hh_income, na.rm = TRUE)
+
+# Covariance population
+sql <- "SELECT covar_pop(median_hh_income, pct_bachelors_higher)
+FROM acs_2011_2015_stats;"
+dbGetQuery(con, sql)
+
+# maybe in R, but I would need to filter na values
+
+cov.pop <- function(x,y=NULL) {
+  cov(x,y)*(NROW(x)-1)/NROW(x)
+}
+
+cov.pop(df$median_hh_income, df$pct_bachelors_higher)
+
+
+# ------
+# rankings
+
+sql <- "CREATE TABLE widget_companies (
+    id bigserial,
+company varchar(30) NOT NULL,
+widget_output integer NOT NULL
+);
+
+INSERT INTO widget_companies (company, widget_output)
+VALUES
+('Morse Widgets', 125000),
+('Springfield Widget Masters', 143000),
+('Best Widgets', 196000),
+('Acme Inc.', 133000),
+('District Widget Inc.', 201000),
+('Clarke Amalgamated', 620000),
+('Stavesacre Industries', 244000),
+('Bowers Widget Emporium', 201000);"
+dbGetQuery(con, sql)
+
+sql <- "SELECT count(*) FROM widget_companies"
+dbGetQuery(con, sql)
+
+sql <- "SELECT
+    company,
+widget_output,
+rank() OVER (ORDER BY widget_output DESC),
+dense_rank() OVER (ORDER BY widget_output DESC)
+FROM widget_companies;"
+dfrank <- dbGetQuery(con, sql)
+
+# rank within groups with partition
+sql <- "CREATE TABLE store_sales (
+    store varchar(30),
+category varchar(30) NOT NULL,
+unit_sales bigint NOT NULL,
+CONSTRAINT store_category_key PRIMARY KEY (store, category)
+);
+
+INSERT INTO store_sales (store, category, unit_sales)
+VALUES
+('Broders', 'Cereal', 1104),
+('Wallace', 'Ice Cream', 1863),
+('Broders', 'Ice Cream', 2517),
+('Cramers', 'Ice Cream', 2112),
+('Broders', 'Beer', 641),
+('Cramers', 'Cereal', 1003),
+('Cramers', 'Beer', 640),
+('Wallace', 'Cereal', 980),
+('Wallace', 'Beer', 988);"
+dbGetQuery(con, sql)
+
+sql <- "SELECT
+    category,
+store,
+unit_sales,
+rank() OVER (PARTITION BY category ORDER BY unit_sales DESC)
+FROM store_sales;"
+dfpartition <- dbGetQuery(con, sql)
+
+
+# finally, 
+sql  <- "CREATE TABLE fbi_crime_data_2015 (
+    st varchar(20),
+city varchar(50),
+population integer,
+violent_crime integer,
+property_crime integer,
+burglary integer,
+larceny_theft integer,
+motor_vehicle_theft integer,
+CONSTRAINT st_city_key PRIMARY KEY (st, city)
+);
+
+COPY fbi_crime_data_2015
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_10_stats/fbi_crime_data_2015.csv'
+WITH (FORMAT CSV, HEADER, DELIMITER ',');"
+dbGetQuery(con, sql)
+
+sql <- "SELECT * FROM fbi_crime_data_2015
+ORDER BY population DESC;"
+dffbi <- dbGetQuery(con, sql)
+
+sql <- "SELECT
+    city,
+st,
+population,
+property_crime,
+round(
+(property_crime::numeric / population) * 1000, 1
+) AS pc_per_1000
+FROM fbi_crime_data_2015
+WHERE population >= 500000
+ORDER BY (property_crime::numeric / population) DESC;"
+df_crime <- dbGetQuery(con, sql)
 
 # disconnect
 dbDisconnect(con)

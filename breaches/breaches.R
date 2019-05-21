@@ -41,7 +41,7 @@ df <- rbind(dfopen, dfclosed)
 # saving combined
 write_csv(df,'csv/combined.csv')
 
-lapply(df, class) # check the classes of the columns. We want the dates to be dates
+head(df)
 
 # select just the columns we want and rename them
 dfa <- select(df,"Individuals Affected","Breach Submission Date")
@@ -62,10 +62,12 @@ head(dfa)
 # https://www.rforexcelusers.com/make-pivottable-in-r/
 # here's how we do that:
 
-# first group by year, month, then sort descending
-dfgroup <- group_by(dfa, breachd,breachdate) %>% arrange(desc(breachd))
-# for each month, count the number of breaches and total up the individuals affected
-dfgroup <- summarise(dfgroup,countbr = n(),sumind = sum(individuals)) 
+
+# group by year-month, sort descending and filter out any NAs in individuals then summarise
+dfgroup <- group_by(dfa, breachd,breachdate) %>% 
+  arrange(desc(breachd)) %>% 
+  filter(!is.na(individuals)) %>% 
+  summarise(countbr = n(),sumind = sum(individuals))
 
 # take a look at what we have
 head(dfgroup)
@@ -76,14 +78,13 @@ write_csv(dfgroup,'csv/update.csv')
 #------ 
 # Finally, we create our top ten list for the month we're examining
 # that's just a matter of slicing and sorting
-
-# first get the columns we want
+# first get the columns we want and rename them
 dflist <- select(dfopen,'Name of Covered Entity','State','Covered Entity Type','Individuals Affected','Breach Submission Date','Type of Breach','Location of Breached Information') 
-# rename them
 colnames(dflist) <- c('entity','state','org','affect','date','type','location')
-# slice the month we want and sort by top number of indv. affected
-dflist <- filter(dflist, (date >= '2019-01-01') & (date <= '2019-01-31') ) %>% arrange(desc(affect))
-# get the top ten
-dflist <- dflist[1:10,]
+
+# filter for the month we want, sort by top number of indv affected and slice the top ten
+dflist <- filter(dflist, (date >= '2019-01-01') & (date <= '2019-01-31') ) %>% 
+  arrange(desc(affect)) %>% slice(1:10)
+
 # save to csv 
 write_csv(dflist,'csv/topten.csv')

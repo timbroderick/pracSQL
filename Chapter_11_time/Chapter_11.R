@@ -103,6 +103,54 @@ sql <- "SELECT * FROM pg_timezone_names
 WHERE name LIKE 'Europe%';"
 dbGetQuery(con, sql)
 
+# set different time zone
+
+# create a test table
+sql <- "CREATE TABLE time_zone_test (test_date timestamp with time zone);
+INSERT INTO time_zone_test VALUES ('2020-01-01 4:00');"
+dbGetQuery(con, sql)
+
+# make sure timezone is US/Central
+sql <- "SET timezone TO 'US/Central';"
+dbGetQuery(con, sql)
+
+sql <- "SHOW timezone;"
+dbGetQuery(con, sql)
+
+# get a date from the test table
+sql <- "SELECT test_date FROM time_zone_test;"
+dbGetQuery(con, sql)
+
+# set a new timezone
+sql <- "SET timezone TO 'US/Pacific';"
+dbGetQuery(con, sql)
+
+sql <- "SHOW timezone;"
+dbGetQuery(con, sql)
+
+# get a date from the test table
+sql <- "SELECT test_date FROM time_zone_test;"
+dbGetQuery(con, sql)
+
+# we get the same date and time
+# here's how to get date time according to different timezones
+sql <- "SELECT test_date AT TIME ZONE 'Asia/Seoul'
+FROM time_zone_test;"
+dbGetQuery(con, sql)
+
+# make sure timezone is US/Central
+sql <- "SET timezone TO 'US/Central';"
+dbGetQuery(con, sql)
+
+sql <- "SHOW timezone;"
+dbGetQuery(con, sql)
+
+# math with dates
+sql <- "SELECT '9/30/1929'::date - '9/27/1929'::date;"
+dbGetQuery(con, sql)
+
+sql <- "SELECT '9/30/1929'::date + '5 years'::interval;"
+dbGetQuery(con, sql)
 
 # disconnect
 dbDisconnect(con)

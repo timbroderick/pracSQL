@@ -20,25 +20,25 @@ Questions? Feel free to email [practicalsqlbook@gmail.com](mailto:practicalsqlbo
 
 ## Chapters
 
-* Chapter 1: Creating Your First Database and Table
-* Chapter 2: Beginning Data Exploration with SELECT
-* Chapter 3: Understanding Data Types
-* Chapter 4: Importing and Exporting Data
-* Chapter 5: Basic Math and Stats with SQL
-* Chapter 6: Joining Tables in a Relational Database
-* Chapter 7: Table Design That Works for You
-* Chapter 8: Extracting Information by Grouping and Summarizing
-* Chapter 9: Inspecting and Modifying Data
-* Chapter 10: Statistical Functions In SQL
-* Chapter 11: Working With Dates and Times
-* Chapter 12: Advanced Query Techniques
-* Chapter 13: Mining Text to Find Meaningful Data
-* Chapter 14: Analyzing Spatial Data with PostGIS
-* Chapter 15: Saving Time with Views, Functions, and Triggers
-* Chapter 16: Using PostgreSQL from the Command Line
-* Chapter 17: Maintaining Your Database
-* Chapter 18: Identifying and Telling the Story Behind Your Data
-* Appendix: Additional PostgreSQL Resources
+* Chapter 1: Creating Your First Database and Table (X)
+* Chapter 2: Beginning Data Exploration with SELECT (X)
+* Chapter 3: Understanding Data Types (X)
+* Chapter 4: Importing and Exporting Data (X)
+* Chapter 5: Basic Math and Stats with SQL (X)
+* Chapter 6: Joining Tables in a Relational Database (X)
+* Chapter 7: Table Design That Works for You (X)
+* Chapter 8: Extracting Information by Grouping and Summarizing (X)
+* Chapter 9: Inspecting and Modifying Data (X)
+* Chapter 10: Statistical Functions In SQL (X)
+* Chapter 11: Working With Dates and Times ( )
+* Chapter 12: Advanced Query Techniques ( )
+* Chapter 13: Mining Text to Find Meaningful Data ( )
+* Chapter 14: Analyzing Spatial Data with PostGIS ( )
+* Chapter 15: Saving Time with Views, Functions, and Triggers ( )
+* Chapter 16: Using PostgreSQL from the Command Line (X)
+* Chapter 17: Maintaining Your Database ( )
+* Chapter 18: Identifying and Telling the Story Behind Your Data (X)
+* Appendix: Additional PostgreSQL Resources (X)
 
 ## Getting the Code and Data on Your Computer
 

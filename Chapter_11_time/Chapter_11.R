@@ -67,21 +67,33 @@ sql <- "SELECT date_part('year', now()) AS \"year\";"
 dbGetQuery(con, sql)
 
 # Comparing current_timestamp and clock_timestamp() during row insert
-sql <- "CREATE TABLE current_time_example (
-time_id bigserial,
-current_timestamp_col timestamp with time zone,
-clock_timestamp_col timestamp with time zone);
-INSERT INTO current_time_example (current_timestamp_col, clock_timestamp_col);"
+
+# create table (table created)
+sql <- "DROP TABLE IF EXISTS current_time_example;"
 dbGetQuery(con, sql)
+
+sql <- "CREATE TABLE current_time_example (
+    time_id bigserial,
+current_timestamp_col timestamp with time zone,
+clock_timestamp_col timestamp with time zone
+);"
+dbGetQuery(con, sql)
+
+sql <- "INSERT INTO current_time_example (current_timestamp_col, clock_timestamp_col)
+    (SELECT current_timestamp, clock_timestamp() FROM generate_series(1,1000));"
+dbGetQuery(con, sql)
+
+sql <- "SELECT * FROM current_time_example;"
+df <- dbGetQuery(con, sql)
 
 # compare
 sql <- "(SELECT current_timestamp,
 clock_timestamp()
 FROM generate_series(1,1000));"
-df <- dbGetQuery(con, sql)
-
-sql <- "SELECT * FROM current_time_example;"
 df2 <- dbGetQuery(con, sql)
+
+# Need to see this in PGadmin. current timestamp records time at beginning of query, 
+# clock returns constant time so it will change as query continues
 
 
 # get postgressql defaults
@@ -104,11 +116,12 @@ WHERE name LIKE 'Europe%';"
 dbGetQuery(con, sql)
 
 # set different time zone
+# not that this doesn't work in R via postgres. Works in pgadmin only
 
-# create a test table
-sql <- "CREATE TABLE time_zone_test (test_date timestamp with time zone);
-INSERT INTO time_zone_test VALUES ('2020-01-01 4:00');"
-dbGetQuery(con, sql)
+# create a test table (table created)
+#sql <- "CREATE TABLE time_zone_test (test_date timestamp with time zone);
+#INSERT INTO time_zone_test VALUES ('2020-01-01 4:00');"
+#dbGetQuery(con, sql)
 
 # make sure timezone is US/Central
 sql <- "SET timezone TO 'US/Central';"

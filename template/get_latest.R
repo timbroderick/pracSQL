@@ -1,5 +1,5 @@
 # set directory
-setwd("~/anaconda3/envs/notebook/MHMetrics/work/")
+setwd("~/Desktop/template")
 
 # load libraries
 library(tidyverse)
@@ -12,7 +12,7 @@ drv <- dbDriver("PostgreSQL")
 con <- dbConnect(drv, dbname = "mhmetrics",
                  host = "localhost", port = 5432,
                  user = "tbroderick")
-# connect to aranalysis (for pracSQL)
+# connect to aranalysis (for salaries)
 #conar <- dbConnect(drv, dbname = "aranalysis",
 #                   host = "localhost", port = 5432,
 #                   user = "tbroderick")
@@ -20,18 +20,24 @@ con <- dbConnect(drv, dbname = "mhmetrics",
 
 
 # execute query
-sql <- "SELECT count(*) FROM hospitals;"
-dbGetQuery(con, sql)
+sql <- "SELECT cms_id, fyear, system, prov_type, own_type, urban_rural FROM descrip;"
+df <- dbGetQuery(con, sql)
+
+uniq <- unique(df$cms_id)
+
+dfbind = data.frame()
+
+for (u in uniq) {
+  print(paste(u),quote=FALSE)
+  getid <- filter(df, cms_id == u)
+  dfget <- getid %>% 
+    arrange(desc(fyear)) %>% 
+    slice(1)
+  dfbind <- rbind(dfbind,dfget)
+}
 
 
-write_csv(df,'csv/xxx.csv', na = '')
-
-# read from an excel file
-url <- 'csv/xxx.xlsx'
-excel_sheets(url)
-#read excel and skip first line"
-dfread <- read_excel(url, sheet="xxx",skip=1)
-
+write_csv(dfbind,'csv/latest_descrip.csv', na = '')
 
 # disconnect
 dbDisconnect(con)

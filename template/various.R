@@ -21,12 +21,14 @@ dbGetQuery(con, sql)
 
 # grabbing data across tables
 # making sure to filter out closed or inactive cms_ids
+# get complete fiscal years (when dealing with numbers)
 # and making sure to have fyears match
-sql <- "SELECT hospitals.cms_id, hospitals.facility, descrip.fyear, descrip.prov_type, 
+sql <- "SELECT hospitals.cms_id, hospitals.facility, descrip.fyear, descrip.fydays, descrip.prov_type, 
 quality.nurses, quality.doctors, quality.recommend, quality.high_rating 
 FROM hospitals LEFT JOIN descrip ON hospitals.cms_id = descrip.cms_id
 LEFT JOIN quality ON hospitals.cms_id = quality.cms_id
-WHERE descrip.fyear = quality.fyear AND (what != 'closed' OR active != 'no') AND 
+WHERE descrip.fyear = quality.fyear AND (descrip.fydays = '365' OR descrip.fydays = '366')
+AND (what != 'closed' OR active != 'no') AND 
 (descrip.prov_type = 'Short-Term' OR descrip.prov_type = 'Critical Access Hospitals' OR descrip.prov_type = 'Childrens Hospitals');"
 df <- dbGetQuery(con, sql)
 

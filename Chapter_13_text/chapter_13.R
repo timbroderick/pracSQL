@@ -114,6 +114,42 @@ sql <- "SELECT substring('The game starts at 7 p.m. on May 2, 2019.' from 'May \
 dbGetQuery(con, sql)
 str_match('The game starts at 7 p.m. on May 2, 2019.' , 'May \\d, \\d{4}')
 
+# load crime data
+sql <- "CREATE TABLE crime_reports (
+    crime_id bigserial PRIMARY KEY,
+date_1 timestamp with time zone,
+date_2 timestamp with time zone,
+street varchar(250),
+city varchar(100),
+crime_type varchar(100),
+description text,
+case_number varchar(50),
+original_text text NOT NULL
+);"
+
+dbGetQuery(con, sql)
+
+sql <- "COPY crime_reports (original_text)
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_13_text/crime_reports.csv'
+WITH (FORMAT CSV, HEADER OFF, QUOTE '\"');"
+dbGetQuery(con, sql)
+
+
+sql <- "SELECT original_text FROM crime_reports;"
+df <- dbGetQuery(con, sql)
+
+# use regexp_match to grab the dates
+# remember we need to escape \
+sql <- "SELECT crime_id,
+       regexp_match(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+# gets the first date as an array.
+# but we can store that in a datafame if we want. 
+# curly brackets turn into parenthesis
+dfdates <- dbGetQuery(con, sql)
+
+
 #write_csv(df,'csv/xxx.csv', na = '')
 
 

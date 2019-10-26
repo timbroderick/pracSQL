@@ -135,10 +135,7 @@ WITH (FORMAT CSV, HEADER OFF, QUOTE '\"');"
 dbGetQuery(con, sql)
 
 
-sql <- "SELECT original_text FROM crime_reports;"
-df <- dbGetQuery(con, sql)
-
-# use regexp_match to grab the dates
+# use regexp_match to grab the first dates
 # remember we need to escape \
 sql <- "SELECT crime_id,
        regexp_match(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}')
@@ -149,9 +146,128 @@ dbGetQuery(con, sql)
 # curly brackets turn into parenthesis
 dfdates <- dbGetQuery(con, sql)
 
+# can I do this with pure R? 
+# As far as I can tell, I need to turn this into a vector
+sql <- "SELECT original_text FROM crime_reports;"
+df <- dbGetQuery(con, sql)
 
-#write_csv(df,'csv/xxx.csv', na = '')
+# turn the data into a vector
+dfv <- df %>% pull(original_text)
+# and this works without any errors
+?data.frame
+ext <- data.frame( str_extract(dfv , '\\d{1,2}\\/\\d{1,2}\\/\\d{2}') )
+colnames(ext) <- c("dates")
 
+str_extract(dfv[1] , '\\d{1,2}\\/\\d{1,2}\\/\\d{2}')
+
+?str_extract
+
+# to grab all dates wih regexp_matches
+# remember we need to escape \
+sql <- "SELECT crime_id,
+regexp_matches(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}', 'g')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# in R
+ext <- data.frame( str_extract_all(dfv, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}') ) 
+# not a great result. I can get everything that I get out of postgres
+# but the data frame in R is messy. This might help: https://www.garrickadenbuie.com/project/regexplain/
+
+# if we just wanted the second value, we could use regexp_match
+# and look for a date with a hypen in front of it.
+# to grab just the date and not the hyphen, place what we want in ()
+
+sql <- "SELECT crime_id,
+       regexp_match(original_text, '-(\\d{1,2}\\/\\d{1,2}\\/\\d{2})')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# Let's go on without the R versions
+
+# get first hour or second hour. Note what's in () gets returned
+sql <- "SELECT crime_id,
+       regexp_match(original_text, '\\d{2}\\n\\d{4}-(\\d{4})')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# get street only
+# \d+ matches any digit appearing one or more times
+# space, then .+ is any character appearing one or more times
+# until the (?:) which looks for what should be the end
+sql <- "SELECT crime_id,
+regexp_match(original_text, 'hrs.\\n(\\d+ .+(?:Sq.|Plz.|Dr.|Ter.|Rd.))')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# get the city
+# look for one word \w+ or up to three words \\w+|\\w+|\\w+
+sql <- "SELECT crime_id,
+regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\\n(\\w+ \\w+|\\w+|\\w+)\\n')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# crime type
+sql <- "SELECT crime_id,
+regexp_match(original_text, '\\n(?:\\w+ \\w+|\\w+|\\w+)\\n(.*):')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# description
+sql <- "SELECT crime_id,
+regexp_match(original_text, ':\\s(.+)(?:C0|SO)')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# case number
+sql <- "SELECT crime_id,
+regexp_match(original_text, '(?:C0|SO)[0-9]+')
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+
+# let's put it all together in a dataframe
+sql <- "SELECT 
+    regexp_match(original_text, '(?:C0|SO)[0-9]+') AS case_number,
+regexp_match(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}') AS date_1,
+regexp_match(original_text, '\\n(?:\\w+ \\w+|\\w+|\\w+)\\n(.*):') AS crime_type,
+regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\\n(\\w+ \\w+|\\w+|\\w+)\n') AS city
+FROM crime_reports;"
+df <- dbGetQuery(con, sql)
+
+# grab it out of the {}
+sql <- "SELECT crime_id,
+(regexp_match(original_text, '(?:C0|SO)[0-9]+'))[1] AS case_number
+FROM crime_reports;"
+dbGetQuery(con, sql)
+
+# can I do that here?
+
+sql <- "SELECT 
+(regexp_match(original_text, '(?:C0|SO)[0-9]+'))[1] AS case_number,
+(regexp_match(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}'))[1] AS date_1,
+(regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\\n(\\w+ \\w+|\\w+|\\w+)\n'))[1] AS city,
+(regexp_match(original_text, '\\n(?:\\w+ \\w+|\\w+|\\w+)\\n(.*):'))[1] AS crime_type,
+(regexp_match(original_text, ':\\s(.+)(?:C0|SO)'))[1] AS description
+FROM crime_reports;"
+df <- dbGetQuery(con, sql)
+
+# let's see what it looks like when we save it
+write_csv(df,'test.csv', na = '')
+
+# we know there are line breaks in the description field, so we can fix that in R
+df$description <- str_replace(df$description,"\n"," ")
+
+# let's see if that worked
+write_csv(df,'test2.csv', na = '')
+
+# almost. Is there a str_replace all?
+# recreate the df, then
+df$description <- str_replace_all(df$description,"\n"," ")
+
+# let's see if that worked
+write_csv(df,'test3.csv', na = '')
+# yes
 
 # disconnect
 dbDisconnect(con)

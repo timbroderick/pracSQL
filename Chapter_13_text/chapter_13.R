@@ -20,8 +20,8 @@ con <- dbConnect(drv, dbname = "aranalysis",
 sql <- "SELECT initcap('hello');"
 dbGetQuery(con, sql)
 # in R
-str_to_lower('hello')
-str_to_upper('HELLO')
+str_to_lower('HELLO')
+str_to_upper('hello')
 str_to_title('hello')
 
 
@@ -198,7 +198,7 @@ dbGetQuery(con, sql)
 sql <- "SELECT crime_id,
 regexp_match(original_text, 'hrs.\\n(\\d+ .+(?:Sq.|Plz.|Dr.|Ter.|Rd.))')
 FROM crime_reports;"
-dbGetQuery(con, sql)
+df <- dbGetQuery(con, sql)
 
 # get the city
 # look for one word \w+ or up to three words \\w+|\\w+|\\w+
@@ -235,7 +235,7 @@ regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\\n(\\w+ \\w+|\\w+|\\w+)\n
 FROM crime_reports;"
 df <- dbGetQuery(con, sql)
 
-# grab it out of the {}
+# grab it out of the {} by adding [1] at the end of the query
 sql <- "SELECT crime_id,
 (regexp_match(original_text, '(?:C0|SO)[0-9]+'))[1] AS case_number
 FROM crime_reports;"
@@ -284,6 +284,8 @@ dbGetQuery(con, sql)
 sql <- "SELECT crime_id, date_1, original_text FROM crime_reports;"
 dfx <- dbGetQuery(con, sql)
 
+# Using Case to update and handle inconsistencies in the data
+# from page 26
 
 sql <- "UPDATE crime_reports 
   SET date_1 = ((regexp_match(original_text, '\\d{1,2}\\/\\d{1,2}\\/\\d{2}'))[1]
@@ -318,6 +320,210 @@ dbGetQuery(con, sql)
 sql <- "SELECT case_number, date_1, street, city, crime_type, description
 FROM crime_reports;"
 dfy <- dbGetQuery(con, sql)
+
+# let's test the results
+sql <- "
+SELECT date_1,street,city,crime_type FROM crime_reports;
+"
+dfcrime <- dbGetQuery(con, sql)
+
+# using regular expressions with WHERE
+sql <- "SELECT geo_name
+FROM us_counties_2010
+WHERE geo_name ~* '(.+lade.+|.+lare.+)'
+ORDER BY geo_name;
+"
+dbGetQuery(con, sql)
+
+# ~ matches case sensitive, ~* is insenstive.
+# So !~ is not match case senstive for anything starting with Wash
+
+sql <- "SELECT geo_name
+FROM us_counties_2010
+WHERE geo_name ~* '.+ash.+' AND geo_name !~ 'Wash.+'
+ORDER BY geo_name;;
+"
+dbGetQuery(con, sql)
+
+#Regular expression functions to replace and split
+
+sql <- "SELECT regexp_replace('05/12/2018', '\\d{4}', '2017');"
+dbGetQuery(con, sql)
+sql <- "SELECT regexp_split_to_table('Four,score,and,seven,years,ago', ',');"
+dbGetQuery(con, sql)
+sql <- "SELECT regexp_split_to_array('Phil Mike Tony Steve', ' ');"
+df <- dbGetQuery(con, sql)
+# arrays are a problem, returning curly brackets
+# regexp_split_to_array
+# {Phil,Mike,Tony,Steve}
+# here's a few ways to remove those
+
+gsub("\\{|\\}", "",df)
+gsub("[{}]", "", df)
+gsub("^\\{+(.+)\\}+$", '\\1', df)
+
+# so let's see what that gives us
+dftry <- as.array( gsub("\\{|\\}", "",df) )
+dftry <- as.data.frame( unlist(strsplit(dftry, ",")) )
+
+# Find the length of an array
+sql <- "SELECT array_length(regexp_split_to_array('Phil Mike Tony Steve', ' '), 1);"
+dbGetQuery(con, sql)
+
+# FULL TEXT SEARCH
+
+# Full-text search operators:
+# & (AND)
+# | (OR)
+# ! (NOT)
+
+# Listing 13-15: Converting text to tsvector data
+
+sql <- "SELECT to_tsvector('I am walking across the sitting room to sit with you.');"
+dbGetQuery(con, sql)
+
+# alas, here is where we're unable to use R apparently
+# as we get an error that to_tsvector is unrecognized field type
+# continue using pgAdmin 4, but notes included here
+
+# this returns 
+# 'across':4 'room':7 'sit':6,9 'walk':3
+
+# to_tsvector automatically removes non-helpful search terms like I and am to
+# it reduces words to their base, removing sufffixes - walking to walk
+# the numbers represent the word's positions in the original string
+# key word is lexemes
+
+# loading the speeches table
+# wonder what kind of full-text search I can do in R with this?
+sql <- "
+CREATE TABLE president_speeches (
+    sotu_id serial PRIMARY KEY,
+president varchar(100) NOT NULL,
+title varchar(250) NOT NULL,
+speech_date date NOT NULL,
+speech_text text NOT NULL,
+search_speech_text tsvector
+);
+
+COPY president_speeches (president, title, speech_date, speech_text)
+FROM '/Users/tbroderick/anaconda3/envs/pracSQL/Chapter_13_text/sotu-1946-1977.csv'
+WITH (FORMAT CSV, DELIMITER '|', HEADER OFF, QUOTE '@');
+"
+dbGetQuery(con, sql)
+
+# R really doesn't like tsvector
+sql <- "SELECT * FROM president_speeches;"
+speeches <- dbGetQuery(con, sql)
+
+# but apparently once things are set up in pgadmin
+# it returns results just fine!
+
+sql <- "SELECT president, speech_date
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('Vietnam')
+ORDER BY speech_date;"
+dbGetQuery(con, sql)
+
+# the previous search returned where the term Vietname showed up in the data
+# ts_headline does that but grabs some context as well
+sql <- "
+SELECT president,
+       speech_date,
+ts_headline(speech_text, to_tsquery('Vietnam'),
+'StartSel = <,
+StopSel = >,
+MinWords=5,
+MaxWords=7,
+MaxFragments=1')
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('Vietnam');
+"
+dbGetQuery(con, sql)
+
+# using multiple words (not roads)
+sql <- "
+SELECT president,
+       speech_date,
+ts_headline(speech_text, to_tsquery('transportation & !roads'),
+'StartSel = <,
+StopSel = >,
+MinWords=5,
+MaxWords=7,
+MaxFragments=1')
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('transportation & !roads');
+"
+dbGetQuery(con, sql)
+
+# <-> finds adjacent words, in this case 'defense' immediatly following 'military'
+sql <- "
+SELECT president,
+       speech_date,
+ts_headline(speech_text, to_tsquery('military <-> defense'),
+'StartSel = <,
+StopSel = >,
+MinWords=5,
+MaxWords=7,
+MaxFragments=1')
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('military <-> defense');
+"
+dbGetQuery(con, sql)
+
+# change <-> to <2> gets you defense exactly two words away from military
+# such as military and defense
+sql <- "
+SELECT president,
+speech_date,
+ts_headline(speech_text, to_tsquery('military <2> defense'),
+'StartSel = <,
+StopSel = >,
+MinWords=5,
+MaxWords=7,
+MaxFragments=1')
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('military <2> defense');
+"
+dbGetQuery(con, sql)
+
+# Scoring relevance with ts_rank()
+# returns speeches ordered by the number of times the terms were found
+
+sql <- "
+SELECT president,
+speech_date,
+ts_rank(search_speech_text,
+        to_tsquery('war & security & threat & enemy')) AS score
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('war & security & threat & enemy')
+ORDER BY score DESC
+LIMIT 5;"
+dbGetQuery(con, sql)
+
+# partly due to the length of the speeches too
+sql <- "SELECT president,
+speech_date,
+char_length(speech_text) FROM president_speeches
+ORDER BY char_length DESC;"
+dbGetQuery(con, sql)
+
+
+# we can normalize the results by dividing by length
+
+sql <- "
+SELECT president,
+       speech_date,
+ts_rank(search_speech_text,
+to_tsquery('war & security & threat & enemy'), 2)::numeric
+AS score
+FROM president_speeches
+WHERE search_speech_text @@ to_tsquery('war & security & threat & enemy')
+ORDER BY score DESC
+LIMIT 5;
+"
+dbGetQuery(con, sql)
+
 
 # disconnect
 dbDisconnect(con)

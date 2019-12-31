@@ -1,2 +1,2 @@
 # pracSQL
-Exercises from Practical SQL. Includes python notebooks and R scripts.
+Exercises from Practical SQL. Includes some python notebooks but is mostly R scripts.

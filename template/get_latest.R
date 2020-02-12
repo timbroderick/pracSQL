@@ -20,7 +20,7 @@ con <- dbConnect(drv, dbname = "mhmetrics",
 
 
 # execute query
-sql <- "SELECT cms_id, fyear, system, prov_type, own_type, urban_rural FROM descrip;"
+sql <- "SELECT cms_id, fyear, system, prov_type, own_type, cbsa, urban_rural FROM descrip;"
 df <- dbGetQuery(con, sql)
 
 uniq <- unique(df$cms_id)
@@ -37,7 +37,7 @@ for (u in uniq) {
 }
 
 
-write_csv(dfbind,'csv/latest_descrip.csv', na = '')
+write_csv(dfbind,'2_output/latest_descrip.csv', na = '')
 
 # disconnect
 dbDisconnect(con)

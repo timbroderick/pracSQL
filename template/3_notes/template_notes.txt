@@ -1,0 +1,6 @@
+template
+- connects to crs database (cost reports database)
+- computes total margins by year using IQR
+
+get_latest
+- shows how to get the latest version of something from a dataset
